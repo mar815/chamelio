@@ -1,45 +1,29 @@
 const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
-mongoose.connect(
-  'mongodb+srv://mar815:four1two4@cluster0.c5fts.mongodb.net/?retryWrites=true&w=majority',
-  {
-    useNewUrlParser: true
-  }
-)
-  .then(() => { 
-    console.log('Successfully connected to MongoDB Atlas!')
-  })
-  .catch((error) => { 
-    console.log('Error connecting to MongoDB Atlas:', error);
-  });
+// Import routes
+const peopleRoutes = require('./routes/people');
 
-const profileSchema = new mongoose.Schema({
-  name: String,
-  association: String,
-  location: String
-});
+dotenv.config({path: __dirname + '/config/.env'});
 
-const Profile = mongoose.model('Profile', profileSchema);
+const app = express();
 
 app.use(bodyParser.json());
+app.use(cors());
 
-app.post('/profiles', (req, res) => {
-  console.log('Data received: ', req.body);
-  const profile = new Profile(req.body);
-  profile.save()
-    .then(profile => {
-      console.log('Data saved: ', profile);
-      res.status(201).json(profile);
-    })
-    .catch(err => {
-      console.log('Error saving data: ', err);
-      res.status(400).json(err);
-    });
-});
+mongoose.set('strictQuery', true);
 
-app.listen(3000, () => { 
-  console.log('Server is listening on port 3000');
+mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
+
+// Use imported routes
+app.use('/people', peopleRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => { 
+  console.log(`Server started on port ${PORT}`);
 })
